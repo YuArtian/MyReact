@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+</head>
+<body>
+  <div id="container"></div>
+  <!--
+    <div data-reactid="0" id="hello">
+      <span data-reactid="0.0">click me</span>
+    </div>
+  -->
+  <script type='text/javascript'>
+    // component class text
+    function ReactDOMTextComponent (text) {
+      this._currentElement = '' + text
+      this._rootNodeID = null
+    }
+    // mountComponent ()
+    ReactDOMTextComponent.prototype.mountComponent = function (rootID) {
+      this._rootNodeID = rootID
+      return '<span data-reactid="' + rootID +'">'+ this._currentElement +'<span>'
+    }
+
+    function ReactDOMComponent (element) {
+      this._currentElement = elelement
+      this._rootNodeID = null
+    }
+
+    ReactDOMComponent.prototype.mountComponent = function (rootID) {
+      this._rootNodeID = rootID
+      var props = this._currentElement.props
+      var tagOpen = '<' + this._currentElement.type
+      var tagClose = '</' + this._currentElement.type + '/>'
+      //加上 reactid
+      tagOpen += 'data-reactid' + this._rootNodeID
+
+    }
+
+    //ReactElement 虚拟DOM
+    function ReactElement (type, key, props) {
+      this.type = type
+      this.key = key
+      this.props = props
+    }
+
+    //component 工厂  返回不同的component实例
+    function instantiateReactComponent(node){
+      if (typeof node === 'string' || typeof node === 'number') {
+        return new ReactDOMTextComponent(node)
+      }
+      if (typeof node === 'object' || typeof node.type === 'string') {
+        return new ReactDOMComponent(node)
+      }
+    }
+
+    React = {
+      nextReactRootIndex: 0,
+      createElement: function (type, config, children) {
+        var props = {}
+        var propName
+        var key = config.key || null
+        // 复制属性
+        for (propName in config) {
+          if (config.hasOwnProperty(propName) && propName !== 'key') {
+            props[propName] = config[propName]
+          }
+        }
+        // 复制children 到props上
+        var childrenLength = arguments.length - 2
+        if (childrenLength === 1) {
+          props.children = $.isArray(children) ? children : [children]
+        }
+        if (childrenLength > 1) {
+          var childArray = Array(childrenLength)
+          for (var index = 0; index < childrenLength; index++) {
+            childArray[index] = arguments[2 + index]
+          }
+        }
+        props.children = childArray
+        return new ReactElement(type, key, props)
+      },
+      render: function (element, container) {
+        var componentInstance = instantiateReactComponent(element)
+        var markup = componentInstance.mountComponent(this.nextReactRootIndex++)
+        container.innerHTML = markup
+      }
+    }
+
+    //演示函数
+    function hello () {
+      alert('hello !')
+    }
+    // base element
+    var element = React.createElement('div', { id: 'hello', onclick: hello }, 'click me')
+
+    React.render(element, document.getElementById('container'))
+
+  </script>
+</body>
+</html>
