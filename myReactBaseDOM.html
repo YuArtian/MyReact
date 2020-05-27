@@ -26,22 +26,51 @@
     // mountComponent ()
     ReactDOMTextComponent.prototype.mountComponent = function (rootID) {
       this._rootNodeID = rootID
-      return '<span data-reactid="' + rootID +'">'+ this._currentElement +'<span>'
+      return '<span data-reactid="' + rootID +'">'+ this._currentElement +'</span>'
     }
-
+    // component base
     function ReactDOMComponent (element) {
-      this._currentElement = elelement
+      this._currentElement = element
       this._rootNodeID = null
     }
-
+    // mountComponent ()
     ReactDOMComponent.prototype.mountComponent = function (rootID) {
       this._rootNodeID = rootID
       var props = this._currentElement.props
       var tagOpen = '<' + this._currentElement.type
-      var tagClose = '</' + this._currentElement.type + '/>'
+      var tagClose = '</' + this._currentElement.type + '>'
       //加上 reactid
-      tagOpen += 'data-reactid' + this._rootNodeID
-
+      tagOpen += ' '+'data-reactid=' + this._rootNodeID
+      //拼凑属性
+      for(var propKey in props){
+        //如果是事件监听
+        if (/^on[A-Za-z]/.test(propKey)) {
+          var eventType = propKey.replace('on', '')
+          //事件代理到document上
+          $(document).on(eventType, '[data-reactid="' + this._rootNodeID + '"]', props[propKey])
+        }
+        //普通属性 排除children
+        if (props[propKey] && propKey !== 'children' && !/^on[A-Za-z]/.test(propKey)) {
+          tagOpen += ' ' + propKey + '=' + props[propKey]
+        }
+      }
+      //获取子节点内容
+      var content = ''
+      console.log('props.children')
+      var children = props.children || []
+      var that = this
+      children.forEach(function(element, key){
+        var childComponentInstance = instantiateReactComponent(element)
+        childComponentInstance._mountIndex = key
+        //设置自己点ID
+        var curRootId = that._rootNodeID + '.' + key
+        //子节点渲染内容
+        var childMarkup = childComponentInstance.mountComponent(curRootId)
+        //拼接
+        content += ' ' + childMarkup
+      });
+      // 拼出结束标签
+      return tagOpen + '>' + content + tagClose
     }
 
     //ReactElement 虚拟DOM
@@ -76,15 +105,15 @@
         // 复制children 到props上
         var childrenLength = arguments.length - 2
         if (childrenLength === 1) {
-          props.children = $.isArray(children) ? children : [children]
+          props.children = Array.isArray(children) ? children : [children]
         }
         if (childrenLength > 1) {
           var childArray = Array(childrenLength)
           for (var index = 0; index < childrenLength; index++) {
             childArray[index] = arguments[2 + index]
           }
+          props.children = childArray
         }
-        props.children = childArray
         return new ReactElement(type, key, props)
       },
       render: function (element, container) {
@@ -99,8 +128,7 @@
       alert('hello !')
     }
     // base element
-    var element = React.createElement('div', { id: 'hello', onclick: hello }, 'click me')
-
+    var element = React.createElement('div', { id: 'hello', onclick: hello }, 'hello !', 'click me')
     React.render(element, document.getElementById('container'))
 
   </script>
